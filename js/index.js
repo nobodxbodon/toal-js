@@ -8,9 +8,11 @@ var functions = [];//patterns to use
 var replayThreshhold = 1;   //if there's at least 1 new known, restart playing
 var playNum=0;
 var playing = false;
+//-1 output all info, larger will omit some. default: -1 
 var levelThreshold = 0;
+var newStarts = 0;
 
-window.onload = function(){
+window.addEventListener('load', function(){
     var input = document.getElementById("newTerm");
     var output = document.getElementById("output");
     var submit = document.getElementById("submit");
@@ -34,7 +36,7 @@ window.onload = function(){
     });
     functions.push(compareByString);
     
-};
+});
 
 function foolAround(inputElement, output){
     if(stopAll) return;
@@ -62,7 +64,7 @@ function play(input, output){
                 known[input]={func:null};
                 num++;
                 var result = eval(input);
-                feedback(output, "playnum:"+playNum+"\n"+input+"=>"+result+"  allKnown:"+num);
+                feedback(output, "playnum:"+playNum+"\n"+input+"=>"+result+"  allKnown:"+num, 1);
                 //TODO: get an expectation based on the input, if the result is the same, not interesting. Otherwise, remember it
                 known[input].result=result;
                 //TODO: check result to see if there's new lexicon, if there is, fool more; if input has pattern with known lexicon, play known ones with the pattern
@@ -84,7 +86,7 @@ function play(input, output){
         }
         catch(err){
             playNum--;
-            feedback(output, err+"  allKnown:"+num)
+            feedback(output, err+"  allKnown:"+num, 1)
             known[input].result=result;
             known[input].error=true;
         };
@@ -139,9 +141,9 @@ function conclude(input, output){
         resetCounter();
         for(var i=0;i<newFoundList.length;i++){
             play(newFoundList[i],output);
-        }
+        }feedback(output, newStarts+" runs",1);
     }else{
-        feedback(output, ((new Date())-start)+"ms\n"+"Nothing new found! Stop everything",1);
+        feedback(output, ((new Date())-start)+"ms\n"+"Nothing new found! Stop everything. After "+newStarts+" runs",1);
     }
 }
 
@@ -161,8 +163,8 @@ function compareByString(i1,i2){
 // compare two strings, return all charactors different from str1
 // TODO: generate pattern of str1->str2 if possible
 function diffstring(str1, str2){
-    var str1 = str1.toString();
-    var str2= str2.toString();
+    str1 = str1.toString();
+    str2= str2.toString();
     if(str1==str2)
         return [];
     else{
@@ -184,8 +186,10 @@ function moreInput(input, output){
         foolAround(input, output)
 }
 function feedback(output, str, level){
-    if(levelThreshold==-1 || level>levelThreshold)
+    if(levelThreshold==-1 || level>levelThreshold){
+        newStarts++;
         output.appendChild(outputInParagraph(str));
+    }
 }
 
 function outputInParagraph(str){
